@@ -15,7 +15,7 @@ import numpy as np
 # Add the current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from batch_image_rotator import BatchImageRotator
+from batch_image_rotator import rotate_equirectangular_worker
 
 def create_test_image(width=1024, height=512, filename="test_equirectangular.jpg"):
     """Create a test equirectangular image"""
@@ -44,38 +44,40 @@ def test_rotation_function():
     with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
         test_image = create_test_image(filename=tmp.name)
     
+    # Create temporary output directory
+    output_dir = tempfile.mkdtemp()
+    
     try:
-        # Create a mock app instance to test rotation
-        import tkinter as tk
-        root = tk.Tk()
-        root.withdraw()  # Hide the window
-        
-        app = BatchImageRotator(root)
-        
-        # Test rotation
-        with Image.open(test_image) as img:
-            print(f"Original image size: {img.size}")
+        # Test different rotation angles
+        angles = [0, 45, 90, 180, -90]
+        for angle in angles:
+            args = (test_image, angle, output_dir)
+            success, result = rotate_equirectangular_worker(args)
             
-            # Test different rotation angles
-            angles = [0, 45, 90, 180, -90]
-            for angle in angles:
-                rotated = app.rotate_equirectangular(img, angle)
-                print(f"Rotation {angle}°: {rotated.size} (should be same as original)")
-                
-                # Save test result
-                output_file = f"test_output_{angle}deg.jpg"
-                rotated.save(output_file)
-                print(f"Saved: {output_file}")
+            if success:
+                print(f"✅ Rotation {angle}° successful")
+                # Check output file exists
+                output_file = Path(output_dir) / Path(test_image).name
+                if output_file.exists():
+                    print(f"   Output file created: {output_file}")
+                else:
+                    print(f"   ❌ Output file not found: {output_file}")
+            else:
+                print(f"❌ Rotation {angle}° failed: {result}")
+                return False
         
-        root.destroy()
         print("✅ Rotation function test passed!")
+        return True
         
     except Exception as e:
         print(f"❌ Rotation function test failed: {e}")
+        return False
     finally:
         # Clean up
         if os.path.exists(test_image):
             os.unlink(test_image)
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
 
 def test_image_formats():
     """Test different image formats"""
@@ -89,6 +91,7 @@ def test_image_formats():
     ]
     
     temp_dir = tempfile.mkdtemp()
+    output_dir = tempfile.mkdtemp()
     
     try:
         for format_name, ext in formats:
@@ -104,14 +107,22 @@ def test_image_formats():
             else:
                 img.save(filename, format_name)
             
-            # Test loading
-            with Image.open(filename) as loaded_img:
-                print(f"✅ {format_name} format: {loaded_img.size}, {loaded_img.mode}")
+            # Test processing
+            args = (filename, 90, output_dir)
+            success, result = rotate_equirectangular_worker(args)
+            
+            if success:
+                print(f"✅ {format_name} format processed successfully")
+            else:
+                print(f"❌ {format_name} format failed: {result}")
                 
     except Exception as e:
         print(f"❌ Image format test failed: {e}")
     finally:
-        shutil.rmtree(temp_dir)
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
 
 def create_sample_images():
     """Create sample images for testing"""
@@ -136,21 +147,48 @@ def create_sample_images():
     
     print(f"✅ Sample images created in {sample_dir}")
 
+def test_multicore_info():
+    """Test multicore detection"""
+    print("\nTesting multicore detection...")
+    
+    try:
+        import multiprocessing
+        num_cores = multiprocessing.cpu_count()
+        print(f"✅ Detected {num_cores} CPU cores")
+        print(f"   Application will use {num_cores} parallel workers")
+        
+        # Test ProcessPoolExecutor
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=num_cores) as executor:
+            print(f"✅ ProcessPoolExecutor with {num_cores} workers initialized successfully")
+            
+    except Exception as e:
+        print(f"❌ Multicore test failed: {e}")
+
 def main():
     """Main test function"""
-    print("🧪 Testing Batch Image Rotator...")
+    print("🧪 Testing Batch Image Rotator v2.0...")
+    print("=" * 50)
     
     # Test core functionality
-    test_rotation_function()
+    success = test_rotation_function()
+    if not success:
+        print("\n❌ Core rotation test failed!")
+        return
+    
     test_image_formats()
+    test_multicore_info()
     create_sample_images()
     
-    print("\n🎉 All tests completed!")
+    print("\n" + "=" * 50)
+    print("🎉 All tests completed!")
     print("\nTo test the GUI:")
-    print("1. Run: python batch_image_rotator.py")
+    print("1. Run: python3 batch_image_rotator.py")
     print("2. Drag the sample images from 'sample_images/' folder")
-    print("3. Set rotation angle and click 'Preview First Image'")
-    print("4. Process the batch to test full functionality")
+    print("3. Set rotation angle and click 'Process Batch'")
+    print("4. Select output directory and watch multi-core processing!")
+    print(f"\nYour system has {multiprocessing.cpu_count()} CPU cores for parallel processing.")
 
 if __name__ == "__main__":
+    import multiprocessing
     main() 

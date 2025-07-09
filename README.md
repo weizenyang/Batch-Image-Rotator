@@ -1,14 +1,16 @@
 # Batch Image Rotator
 
-A cross-platform Python application for batch rotating equirectangular images with drag-and-drop functionality.
+A streamlined, high-performance Python application for batch rotating equirectangular images with multi-core processing and drag-and-drop functionality.
 
 ## Features
 
+- **Multi-Core Processing**: Automatically scales to use all CPU cores for maximum speed
 - **Drag and Drop**: Simply drag image files into the application
-- **Batch Processing**: Process multiple images at once
+- **Batch Processing**: Process multiple images simultaneously
 - **Equirectangular Rotation**: Specialized rotation for 360° panoramic images
 - **Format Preservation**: Maintains original image format and quality
-- **Preview Function**: Preview rotation before processing
+- **Original Naming**: Keeps original filenames (no prefixes/suffixes)
+- **Streamlined UI**: Clean, minimal interface focused on essential operations
 - **Cross-Platform**: Works on Mac and Windows
 - **Fast Startup**: Built with tkinter for quick launching
 
@@ -33,14 +35,14 @@ A cross-platform Python application for batch rotating equirectangular images wi
 
 3. **Run the application**:
    ```bash
-   python batch_image_rotator.py
+   python3 batch_image_rotator.py
    ```
 
 ### Option 2: Build Executable
 
 1. **Install dependencies and build**:
    ```bash
-   python build_app.py
+   python3 build_app.py
    ```
 
 2. **Run the executable**:
@@ -56,16 +58,13 @@ A cross-platform Python application for batch rotating equirectangular images wi
    - Click the drop zone to browse and select files
 
 2. **Set Rotation**:
-   - Use the slider or enter a specific angle (-180° to 180°)
+   - Enter rotation angle in degrees (-180° to 180°)
    - Positive values rotate clockwise, negative values rotate counterclockwise
 
-3. **Preview** (optional):
-   - Click "Preview First Image" to see how the rotation will look
-
-4. **Process Batch**:
+3. **Process Batch**:
    - Click "Process Batch"
    - Select an output directory
-   - Wait for processing to complete
+   - Processing will use all available CPU cores for maximum speed
 
 ### Understanding Equirectangular Rotation
 
@@ -78,9 +77,16 @@ Equirectangular images (360° panoramas) are rotated horizontally by shifting pi
 
 ### Output
 
-- Processed images are saved with the suffix `_rotated_[angle]deg`
+- Processed images are saved with their **original filenames**
 - Original format and quality are preserved
-- Example: `panorama.jpg` → `panorama_rotated_45.0deg.jpg`
+- Example: `panorama.jpg` → `panorama.jpg` (in output directory)
+
+## Performance
+
+- **Multi-Core Processing**: Automatically uses all CPU cores
+- **Parallel Processing**: Multiple images processed simultaneously
+- **Memory Efficient**: Each worker processes images independently
+- **Progress Tracking**: Real-time progress updates during processing
 
 ## System Requirements
 
@@ -107,17 +113,17 @@ pip install pyinstaller
 
 ```bash
 # Build executable
-python build_app.py
+python3 build_app.py
 
 # Clean build artifacts
-python build_app.py clean
+python3 build_app.py clean
 ```
 
 ### Platform-Specific Notes
 
 #### macOS
-- Creates universal binary supporting both Intel and Apple Silicon
-- May require code signing for distribution
+- Creates ARM64 native binary for Apple Silicon
+- Falls back gracefully from universal build if needed
 - App bundle created in `dist/` folder
 
 #### Windows
@@ -133,23 +139,32 @@ python build_app.py clean
    - Install tkinterdnd2: `pip install tkinterdnd2`
    - You can still use the browse button
 
-2. **"Failed to preview image"**
-   - Ensure the image file is not corrupted
-   - Check if the image format is supported
+2. **Processing seems slow**
+   - Application automatically uses all CPU cores
+   - Large images take more time
+   - Check available RAM and close other applications
 
 3. **Build fails**
    - Ensure all dependencies are installed
-   - Try cleaning build artifacts: `python build_app.py clean`
-
-4. **Slow processing**
-   - Large images take more time
-   - Processing happens in background thread
+   - Try cleaning build artifacts: `python3 build_app.py clean`
 
 ### Performance Tips
 
-- For very large images, consider resizing before rotation
-- Close other applications to free up memory
-- Use SSD storage for faster file I/O
+- **More CPU cores = faster processing**
+- **Use SSD storage** for faster file I/O
+- **Close other applications** to free up CPU and memory
+- **Process images in smaller batches** if running out of memory
+
+## What's New
+
+### v2.0 Optimizations
+
+- ✅ **Multi-core processing** with automatic CPU detection
+- ✅ **Streamlined UI** with essential controls only
+- ✅ **Original filenames** preserved (no prefixes/suffixes)
+- ✅ **Faster processing** with parallel workers
+- ✅ **Real-time progress** tracking
+- ✅ **Smaller window size** for better screen utilization
 
 ## License
 
